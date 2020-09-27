@@ -1,0 +1,30 @@
+= POP
+
+== What's this?
+
+This tiny program shows your image in your e-paper!
+
+== Configuration
+
+You need +config.json+ in your working directory to specify the pin numbers and SPI device file.
+
+Example:
+[source,json]
+----
+{
+    "pins": {
+        "DC": 13,
+        "RST": 50,
+        "BUSY": 15
+    },
+    "spi": {
+        "dev": "/dev/spidev0.0"
+    }
+}
+----
+
+Note that the pin numbers specify the sysfs GPIO directories (+/sys/class/gpio/gpio13+ for the DC pin in the example above).
+
+== License
+
+Apache 2.0
