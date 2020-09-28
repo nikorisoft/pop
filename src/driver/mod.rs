@@ -1,3 +1,4 @@
+use image;
 use sysfs_gpio::{Direction, Pin, Result};
 use spidev::{Spidev, SpidevOptions, SpiModeFlags};
 
@@ -5,7 +6,18 @@ use std::time;
 use std::thread;
 use std::io::prelude::*;
 
+const DISPLAY_WIDTH: usize = 400;
+const DISPLAY_HEIGHT: usize = 300;
 const WAIT_DURATION: time::Duration = time::Duration::from_millis(200);
+
+fn is_black(img: &image::GrayImage, x: u32, y: u32) -> bool {
+    let image::Luma([p]) = img.get_pixel(x, y);
+    if *p < 128 {
+        true
+    } else {
+        false
+    }
+}
 
 pub struct EPaper42Driver {
     busy_pin: Pin,
@@ -36,7 +48,7 @@ impl EPaper42Driver {
         self.dc_pin.set_direction(Direction::Out)?;
 
         self.spidev.configure(&SpidevOptions::new()
-            .bits_per_word(8).max_speed_hz(4000000).mode(SpiModeFlags::SPI_MODE_0)
+            .bits_per_word(0).max_speed_hz(4000000).mode(SpiModeFlags::SPI_MODE_0)
             .lsb_first(false)
             .build())?;
 
@@ -113,15 +125,15 @@ impl EPaper42Driver {
     }
 
     pub fn clear_display(&mut self) -> Result<()> {
-        let empty_line = [0xffu8; 50];
+        let empty_line = [0xffu8; DISPLAY_WIDTH / 8];
 
         self.send_command_byte(0x10)?;
-        for _ in 0..300 {
+        for _ in 0..DISPLAY_HEIGHT {
             self.send_data(&empty_line)?;
         }
 
         self.send_command_byte(0x13)?;
-        for _ in 0..300 {
+        for _ in 0..DISPLAY_HEIGHT {
             self.send_data(&empty_line)?;
         }
 
@@ -132,12 +144,12 @@ impl EPaper42Driver {
     }
 
     pub fn print_tricolor(&mut self) -> Result<()> {
-        let empty_line = [0xffu8; 50];
-        let full_line = [0x00u8; 50];
+        let empty_line = [0xffu8; DISPLAY_WIDTH / 8];
+        let full_line = [0x00u8; DISPLAY_WIDTH / 8];
 
         self.send_command_byte(0x10)?;
-        for y in 0..300 {
-            if y < 100 {
+        for y in 0..DISPLAY_HEIGHT {
+            if y < DISPLAY_HEIGHT / 3 {
                 self.send_data(&empty_line)?;
             } else {
                 self.send_data(&full_line)?;
@@ -145,12 +157,54 @@ impl EPaper42Driver {
         }
 
         self.send_command_byte(0x13)?;
-        for y in 0..300 {
-            if y < 200 {
+        for y in 0..DISPLAY_HEIGHT {
+            if y < DISPLAY_HEIGHT / 3 * 2 {
                 self.send_data(&empty_line)?;
             } else {
                 self.send_data(&full_line)?;
             }
+        }
+
+        self.send_command_byte(0x12)?;
+        self.wait_busy()?;
+
+        Ok(())
+    }
+
+    pub fn print_image(&mut self, img: &image::GrayImage) -> Result<()> {
+        let empty_line = [0xffu8; DISPLAY_WIDTH / 8];
+
+        if img.width() != DISPLAY_WIDTH as u32 || img.height() != DISPLAY_HEIGHT as u32 {
+            return Err(sysfs_gpio::Error::Unsupported("Wrong image size".to_string()));
+        }
+
+        let mut buf = Vec::new();
+        for y in 0..DISPLAY_HEIGHT {
+            let mut xbuf = [0xffu8; DISPLAY_WIDTH / 8];
+            for x in 0..(DISPLAY_WIDTH / 8) {
+                let mut dat = 0xffu8;
+
+                for b in 0..8 {
+                    if !is_black(&img, (x * 8 + b) as u32, y as u32) {
+                        dat &= !(1 << b);
+                    }
+                }
+                xbuf[x] = dat;
+
+                print!("{},", xbuf[x]);
+            }
+            println!("");
+            buf.push(xbuf);
+        }
+
+        self.send_command_byte(0x10)?;
+        for y in 0..DISPLAY_HEIGHT {
+            self.send_data(&buf[y])?;
+        }
+
+        self.send_command_byte(0x13)?;
+        for _ in 0..DISPLAY_HEIGHT {
+            self.send_data(&empty_line)?;
         }
 
         self.send_command_byte(0x12)?;

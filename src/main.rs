@@ -5,6 +5,9 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::time::Duration;
 use std::thread;
+use std::env;
+
+use image;
 
 mod driver;
 
@@ -24,6 +27,14 @@ fn check_config_string(value: &json::JsonValue) -> String {
 
 fn main() -> std::io::Result<()> {
     println!("POP (Pop team epic On E-paper)");
+
+    let image =
+        if env::args().len() < 2 {
+            None
+        } else {
+            let args: Vec<String> = env::args().collect();
+            Some(image::open(&args[1]).unwrap().to_luma())
+        };
 
     let mut file = File::open("config.json")?;
     let mut config_contents = String::new();
@@ -49,15 +60,22 @@ fn main() -> std::io::Result<()> {
     println!("2. First Sequence");
     paper.first_sequence().unwrap();
 
-    println!("3. Clear Display");
-    paper.clear_display().unwrap();
+    match image {
+        Some(image) => {
+            println!("3. Print Image");
+            paper.print_image(&image).unwrap();
+        },
+        None => {
+            println!("3. Clear Display");
+            paper.clear_display().unwrap();
 
-    thread::sleep(Duration::from_millis(500));
+            thread::sleep(Duration::from_millis(500));
 
-    println!("4. Show Tricolor Stripe");
-    paper.print_tricolor().unwrap();
-
-    println!("OK, close");
+            println!("4. Show Tricolor Stripe");
+            paper.print_tricolor().unwrap();
+        }
+    }
+    println!("Finished. Closing...");
 
     paper.close().unwrap();
 

@@ -8,5 +8,10 @@ edition = "2018"
 
 [dependencies]
 json = "0.12"
+image = "0.23"
 sysfs_gpio = "0.5"
 spidev = "0.4"
+
+[[bin]]
+name = "pop"
+path = "src/main.rs"
