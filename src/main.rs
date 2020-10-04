@@ -1,6 +1,3 @@
-extern crate sysfs_gpio;
-extern crate json;
-
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Duration;
@@ -8,6 +5,7 @@ use std::thread;
 use std::env;
 
 use image;
+use json;
 
 mod driver;
 
