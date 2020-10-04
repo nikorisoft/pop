@@ -28,12 +28,19 @@ fn check_config_string(value: &json::JsonValue) -> String {
 fn main() -> std::io::Result<()> {
     println!("POP (Pop team epic On E-paper)");
 
+    let args: Vec<String> = env::args().collect();
     let image =
-        if env::args().len() < 2 {
+        if args.len() < 2 {
+            None
+        } else {
+            Some(image::open(&args[1]).unwrap().to_luma())
+        };
+    let red_image =
+        if args.len() < 3 {
             None
         } else {
             let args: Vec<String> = env::args().collect();
-            Some(image::open(&args[1]).unwrap().to_luma())
+            Some(image::open(&args[2]).unwrap().to_luma())
         };
 
     let mut file = File::open("config.json")?;
@@ -63,7 +70,11 @@ fn main() -> std::io::Result<()> {
     match image {
         Some(image) => {
             println!("3. Print Image");
-            paper.print_image(&image).unwrap();
+            if let Some(red_image) = red_image {
+                paper.print_image(&image, Some(&red_image)).unwrap();
+            } else {
+                paper.print_image(&image, None).unwrap();
+            }
         },
         None => {
             println!("3. Clear Display");
