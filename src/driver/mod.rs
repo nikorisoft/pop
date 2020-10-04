@@ -78,7 +78,6 @@ impl EPaper42Driver {
 
     pub fn send_command_byte(&mut self, byte: u8) -> Result<()> {
         self.dc_pin.set_value(0)?;
-        thread::sleep(time::Duration::from_millis(10));
         self.spidev.write(&[byte])?;
         self.spidev.flush()?;
 
@@ -86,7 +85,6 @@ impl EPaper42Driver {
     }
     pub fn send_data_byte(&mut self, byte: u8) -> Result<()> {
         self.dc_pin.set_value(1)?;
-        thread::sleep(time::Duration::from_millis(10));
         self.spidev.write(&[byte])?;
         self.spidev.flush()?;
 
@@ -95,7 +93,6 @@ impl EPaper42Driver {
 
     pub fn send_data(&mut self, bytes: &[u8]) -> Result<()> {
         self.dc_pin.set_value(1)?;
-        thread::sleep(time::Duration::from_millis(10));
         let w = self.spidev.write(bytes);
         match w {
             Ok(written) => if written != bytes.len() {
