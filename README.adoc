@@ -25,6 +25,25 @@ Example:
 
 Note that the pin numbers specify the sysfs GPIO directories (+/sys/class/gpio/gpio13+ for the DC pin in the example above).
 
+== Sample Output
+
+----
+$ ./target/release/pop mono.png red.png
+POP (Pop team epic On E-paper)
+Pin configuration: RST = 50, DC = 13, BUSY = 15
+SPI configuration: /dev/spidev0.0
+1. Reset
+2. First Sequence
+.
+3. Print Image
+....................................................................................
+Convert the images : 77 ms
+Transfer the images : 239 ms
+Display the image : 16914 ms
+Finished. Closing...
+.
+----
+
 == License
 
 Apache 2.0

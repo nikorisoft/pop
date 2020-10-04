@@ -184,6 +184,8 @@ impl EPaper42Driver {
     }
 
     pub fn print_image(&mut self, img: &image::GrayImage, red_img: Option<&image::GrayImage>) -> Result<()> {
+        let time_begin = time::SystemTime::now();
+
         if img.width() != DISPLAY_WIDTH as u32 || img.height() != DISPLAY_HEIGHT as u32 {
             return Err(sysfs_gpio::Error::Unsupported("Wrong image size".to_string()));
         }
@@ -219,6 +221,8 @@ impl EPaper42Driver {
             red_buf.push(xredbuf);
         }
 
+        let time_decoded = time::SystemTime::now();
+
         self.send_command_byte(0x10)?;
         for y in 0..DISPLAY_HEIGHT {
             self.send_data(&buf[y])?;
@@ -230,7 +234,16 @@ impl EPaper42Driver {
         }
 
         self.send_command_byte(0x12)?;
+
+        let time_transferred = time::SystemTime::now();
+
         self.wait_busy()?;
+
+        let time_finished = time::SystemTime::now();
+
+        println!("Convert the images : {} ms", time_decoded.duration_since(time_begin).unwrap().as_millis());
+        println!("Transfer the images : {} ms", time_transferred.duration_since(time_decoded).unwrap().as_millis());
+        println!("Display the image : {} ms", time_finished.duration_since(time_transferred).unwrap().as_millis());
 
         Ok(())
     }
