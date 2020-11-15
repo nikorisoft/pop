@@ -29,7 +29,7 @@ Note that the pin numbers specify the sysfs GPIO directories (+/sys/class/gpio/g
 
 ----
 $ ./target/release/pop mono.png red.png
-POP (Pop team epic On E-paper)
+POP (Picture On e-Paper)
 Pin configuration: RST = 50, DC = 13, BUSY = 15
 SPI configuration: /dev/spidev0.0
 1. Reset

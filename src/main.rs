@@ -24,7 +24,7 @@ fn check_config_string(value: &json::JsonValue) -> String {
 }
 
 fn main() -> std::io::Result<()> {
-    println!("POP (Pop team epic On E-paper)");
+    println!("POP (Picture On e-Paper)");
 
     let args: Vec<String> = env::args().collect();
     let image =
